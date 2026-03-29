@@ -1,100 +1,155 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    background: #2c2c2c;
-    /* Dark background */
-    color: #f5f5f5;
-    /* Light text for contrast */
+    padding: 20px;
+    background: #1f2329;
+    color: #f5f7fa;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .game-container {
+    width: 100%;
+    max-width: 560px;
     text-align: center;
-    background: #3a3a3a;
-    /* Darker container background */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-    border-radius: 20px;
-    padding: 30px;
+    background: #2a2f36;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border-radius: 22px;
+    padding: 28px 22px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 500px;
-    color: #ffffff;
-    /* Ensure text is visible */
+    justify-content: center;
+    margin: 0 auto;
 }
 
 h1 {
-    margin-bottom: 20px;
-    font-size: 2.5em;
+    margin: 0 0 18px;
+    font-size: 2.3rem;
+    color: #ffffff;
+}
+
+h2 {
+    margin-top: 0;
+    color: #e8edf2;
+    text-transform: uppercase;
+    /* Transform text to uppercase */
+}
+
+.game-mode-selection {
+    width: 100%;
+    display: flex;
+    /* Use flexbox to align items */
+    flex-direction: column;
+    /* Stack elements vertically */
+    align-items: center;
+    /* Center align all elements */
+    gap: 10px;
+    /* Add spacing between elements */
+}
+
+.game-mode-selection .mode-btn {
+    display: inline-block;
+    /* Ensure buttons are inline */
+    margin: 0 10px;
+    /* Add horizontal spacing between buttons */
+}
+
+.game-interface {
+    width: 100%;
 }
 
 .game-info {
-    margin: 20px 0;
-    font-size: 1.3em;
+    margin: 10px 0 18px;
+    font-size: 1.05rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 10px;
 }
 
-.game-info div {
-    margin: 5px 0;
+.current-player,
+.game-mode-display {
+    background: #3a414b;
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    display: inline-block;
+    margin: 5px;
+    text-align: center;
+    /* Center align text */
 }
 
 .scoreboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     margin-top: 15px;
-    text-align: left;
+    text-align: center;
     background: #4a4a4a;
     padding: 10px;
     border-radius: 10px;
     width: 100%;
     max-width: 300px;
+    box-sizing: border-box;
+    /* Ensure proper alignment */
 }
 
 .scoreboard p {
     margin: 5px 0;
     color: #ffffff;
-    /* Ensure text is visible */
     font-size: 1.1em;
+    text-align: center;
+    /* Center align text */
 }
 
 .game-board {
     display: grid;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    grid-gap: 5px;
+    /* Reduced gap to make the frame fit better */
+    border: none;
+    border-radius: 15px;
+    background-color: #2c2c2c;
+    width: 310px;
+    /* Adjusted width to fit the cells and gaps */
+    height: 310px;
+    /* Adjusted height to fit the cells and gaps */
     grid-template-columns: repeat(3, 100px);
     grid-template-rows: repeat(3, 100px);
-    gap: 10px;
-    margin: 20px auto;
-    background: #2c2c2c;
-    padding: 15px;
-    border-radius: 15px;
-    justify-self: center;
-    width: fit-content;
 }
 
 .cell {
-    background: #e9ecef;
-    border: none;
-    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: 100px;
     font-size: 2.5em;
     font-weight: bold;
+    background-color: #e9ecef;
+    border: none;
+    border-radius: 10px;
     color: #495057;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .cell:hover {
-    background: #dee2e6;
-    box-shadow: none;
-}
-
-.cell:disabled {
-    cursor: not-allowed;
-    opacity: 0.8;
+    background-color: #dee2e6;
 }
 
 .cell.x {
@@ -105,85 +160,153 @@ h1 {
     color: black;
 }
 
-.current-player {
-    background: #4a4a4a;
-    /* Darker background for better contrast */
-    color: #ffffff;
-    /* White text for visibility */
-    padding: 10px 20px;
-    border-radius: 25px;
-    display: inline-block;
-    margin: 10px;
+.winning-cell {
+    background: #86efac !important;
+    color: #052e16 !important;
+    box-shadow: 0 0 18px rgba(134, 239, 172, 0.4);
 }
 
 .winner-message,
-.draw-message {
-    font-size: 1.5em;
-    margin: 20px 0;
-    padding: 15px;
-    background: #444444;
-    /* Darker background for better contrast */
-    color: #ffffff;
-    /* White text for visibility */
-    border-radius: 15px;
+.draw-message,
+.computer-thinking,
+.level-message {
+    font-size: 1.05rem;
+    margin: 14px 0;
+    padding: 14px 16px;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center; /* Align text to center */
+    display: flex; /* Use flexbox for alignment */
+    justify-content: center; /* Center align content */
+    align-items: center; /* Center align vertically */
 }
 
-.reset-btn {
-    background: #5a5a5a;
-    color: #ffffff;
-    border: none;
+.winner-message,
+.level-message {
+    background: #2f3d2f;
+    color: #d1fae5;
+    border: 1px solid #4ade80;
+}
+
+.draw-message {
+    background: #41392c;
+    color: #fde68a;
+    border: 1px solid #facc15;
+}
+
+.computer-thinking {
+    background: #313843;
+    color: #dbeafe;
+    border: 1px solid #60a5fa;
+    animation: pulse 1s infinite;
+}
+
+.game-controls {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.action-btn {
     padding: 12px 25px;
     font-size: 1.1em;
     border-radius: 25px;
     cursor: pointer;
-    transition: all 0.3s ease;
     margin: 10px;
+    transition: all 0.3s ease;
+    height: 50px;
+    /* Ensures consistent height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reset-btn {
+    background: #007bff;
+    /* Match color with .mode-btn */
+    color: #ffffff;
+    border: none;
+    padding: 15px 30px;
+    /* Match padding with .mode-btn */
+    font-size: 1.2em;
+    /* Match font size with .mode-btn */
+    border-radius: 25px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    /* Match min-width with .mode-btn */
+    height: 50px;
+    /* Match height with .mode-btn */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .reset-btn:hover {
-    background: #4a4a4a;
+    background: #0056b3;
+    /* Match hover color with .mode-btn */
+    color: #ffffff;
 }
 
 .mode-btn {
-    background: #1e90ff;
-    /* Bright blue for buttons */
+    background: #007bff;
     color: #ffffff;
-    /* White text */
     border: none;
-    padding: 15px 30px;
+    padding: 0 30px;
+    /* Adjusted padding to maintain consistent height */
     font-size: 1.2em;
     border-radius: 25px;
     cursor: pointer;
     margin: 10px;
     transition: all 0.3s ease;
     min-width: 200px;
+    height: 50px;
+    /* Ensures consistent height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mode-btn:hover {
-    background: #1c86ee;
-    /* Slightly darker blue on hover */
-}
-
-.game-mode-display {
-    background: #5a5a5a;
-    /* Darker background for better contrast */
+    background: #0056b3;
     color: #ffffff;
-    /* White text for visibility */
-    padding: 8px 15px;
-    border-radius: 20px;
-    display: inline-block;
-    margin: 5px;
-    font-size: 1em;
 }
 
-.game-controls {
-    margin-top: 20px;
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.65;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
-.computer-thinking {
-    background: #d0d0d0;
-    padding: 10px 20px;
-    border-radius: 15px;
-    margin: 10px 0;
-    animation: pulse 1s infinite;
+@media (max-width: 480px) {
+    .game-board {
+        grid-template-columns: repeat(3, 78px);
+        grid-template-rows: repeat(3, 78px);
+    }
+
+    .cell {
+        width: 78px;
+        height: 78px;
+        font-size: 2rem;
+    }
+
+    .action-btn,
+    .reset-btn,
+    .mode-btn {
+        width: 100%;
+        min-width: 0;
+    }
 }

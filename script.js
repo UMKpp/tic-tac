@@ -1,3 +1,5 @@
+console.log("Script loaded");
+
 // JavaScript logic extracted from the HTML file
 
 let currentPlayer = 'X';

@@ -185,6 +185,13 @@ function endRound(winner, pattern) {
 
 function proceedToNextLevel() {
     resetGame();
+    if (level < 10) {
+        level++;
+        updateLevelDisplay();
+        document.getElementById("gameMessage").innerHTML = `
+            <div class="level-message">Welcome to Level ${level}!</div>
+        `;
+    }
 }
 
 function backToModeSelection() {

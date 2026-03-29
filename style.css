@@ -176,16 +176,28 @@ h2 {
     border-radius: 14px;
     width: 100%;
     max-width: 360px;
-    text-align: center; /* Align text to center */
-    display: flex; /* Use flexbox for alignment */
-    justify-content: center; /* Center align content */
-    align-items: center; /* Center align vertically */
+    text-align: center;
+    /* Align text to center */
+    display: flex;
+    /* Use flexbox for alignment */
+    justify-content: center;
+    /* Center align content */
+    align-items: center;
+    /* Center align vertically */
+    align-self: center;
+    /* Ensure alignment with other elements */
 }
 
 .winner-message,
 .level-message {
-    background: #2f3d2f;
+    width: 100%;
+    max-width: 360px;
+    margin: 14px auto;
+    /* Center align the message boxes */
+    padding: 14px 16px;
+    border-radius: 14px;
     color: #d1fae5;
+    background: #2f3d2f;
     border: 1px solid #4ade80;
 }
 
@@ -277,6 +289,30 @@ h2 {
     color: #ffffff;
 }
 
+.mode-btn.action-btn {
+    background: #007bff;
+    /* Revert background to original blue */
+    color: #ffffff;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    border-radius: 25px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-btn.action-btn:hover {
+    background: #0056b3;
+    /* Revert hover color to original darker blue */
+    color: #ffffff;
+}
+
 @keyframes pulse {
     0% {
         opacity: 1;
@@ -309,4 +345,11 @@ h2 {
         width: 100%;
         min-width: 0;
     }
+}
+
+#gameMessage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center align the parent container */
 }

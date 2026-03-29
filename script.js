@@ -1,112 +1,61 @@
-console.log("Script loaded");
+let board = Array(9).fill("");
+let currentPlayer = "X";
+let gameMode = "";
+let gameActive = false;
+let level = 1;
+let isComputerTurn = false;
 
-// JavaScript logic extracted from the HTML file
+const scores = {
+    X: 0,
+    O: 0,
+    draws: 0
+};
 
-let currentPlayer = 'X';
-updateCurrentPlayerDisplay();
+const winningPatterns = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+];
 
-function getBestMove() {
-    if (level <= 3) {
-        return getRandomMove();
-    } else if (level <= 6) {
-        return getIntermediateMove();
-    } else {
-        return getAdvancedMove();
+document.addEventListener("DOMContentLoaded", () => {
+    createBoard();
+    updateCurrentPlayerDisplay();
+    updateScoreboard();
+    updateLevelDisplay();
+});
+
+function createBoard() {
+    const gameBoard = document.getElementById("gameBoard");
+    gameBoard.innerHTML = "";
+
+    for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("button");
+        cell.className = "cell";
+        cell.dataset.index = i;
+        cell.addEventListener("click", () => handleCellClick(i));
+        gameBoard.appendChild(cell);
     }
 }
 
-function getRandomMove() {
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            if (board[i][j] === " ") {
-                return { row: i, col: j };
-            }
-        }
-    }
-    return null;
-}
+function startGame(mode) {
+    gameMode = mode;
+    document.getElementById("gameModeSelection").classList.add("hidden");
+    document.getElementById("gameInterface").classList.remove("hidden");
+    document.getElementById("gameMode").textContent =
+        `Mode: ${mode === "human" ? "Play with Friend" : "Play with Computer"}`;
 
-function getIntermediateMove() {
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            if (board[i][j] === " ") {
-                board[i][j] = "O";
-                if (checkWinner(board, "O")) {
-                    board[i][j] = " ";
-                    return { row: i, col: j };
-                }
-                board[i][j] = " ";
-            }
-        }
-    }
-
-    if (board[1][1] === " ") {
-        return { row: 1, col: 1 };
-    }
-
-    const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
-    for (let corner of corners) {
-        if (board[corner.row][corner.col] === " ") {
-            return corner;
-        }
-    }
-
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            if (board[i][j] === " ") {
-                return { row: i, col: j };
-            }
-        }
-    }
-
-    return null;
-}
-
-function checkWinner(board, player) {
-    for (let i = 0; i < 3; i++) {
-        if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
-            return true;
-        }
-    }
-
-    for (let i = 0; i < 3; i++) {
-        if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
-            return true;
-        }
-    }
-
-    if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
-        return true;
-    }
-    if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
-        return true;
-    }
-
-    return false;
-}
-
-function isDraw(board) {
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            if (board[i][j] === " ") {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-function disableAllCells() {
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => cell.disabled = true);
+    level = 1;
+    updateLevelDisplay();
+    resetGame();
 }
 
 function resetGame() {
-    board = [
-        [" ", " ", " "],
-        [" ", " ", " "],
-        [" ", " ", " "]
-    ];
+    board = Array(9).fill("");
     currentPlayer = "X";
     gameActive = true;
     isComputerTurn = false;
@@ -114,82 +63,49 @@ function resetGame() {
     updateCurrentPlayerDisplay();
     document.getElementById('gameMessage').innerHTML = '';
 
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => {
-        cell.textContent = '';
-        cell.className = 'cell';
-        cell.disabled = false;
-    });
+    createBoard(); // Revert to static 3x3 board creation
 }
 
-function updateScoreboard() {
-    document.getElementById('playerXScore').textContent = scores.X;
-    document.getElementById('playerOScore').textContent = scores.O;
-    document.getElementById('draws').textContent = scores.draws;
-}
-
-function highlightWinningCells(board, player) {
-    const winningCombination = getWinningCombination(board, player);
-    if (winningCombination) {
-        winningCombination.forEach(([row, col]) => {
-            const cellIndex = row * 3 + col;
-            const cellElement = document.querySelectorAll('.cell')[cellIndex];
-            cellElement.classList.add('winning-cell');
-        });
-    }
-}
-
-function getWinningCombination(board, player) {
-    for (let i = 0; i < 3; i++) {
-        if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
-            return [[i, 0], [i, 1], [i, 2]];
-        }
+function handleCellClick(index) {
+    if (!gameActive || board[index] !== "" || isComputerTurn) {
+        return;
     }
 
-    for (let i = 0; i < 3; i++) {
-        if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
-            return [[0, i], [1, i], [2, i]];
-        }
+    makeMove(index, currentPlayer);
+
+    const winnerData = getWinnerData();
+    if (winnerData) {
+        endRound(winnerData.player, winnerData.pattern);
+        return;
     }
 
-    if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
-        return [[0, 0], [1, 1], [2, 2]];
-    }
-    if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
-        return [[0, 2], [1, 1], [2, 0]];
-    }
-
-    return null;
-}
-
-function levelUp() {
-    if (level < 10) {
-        level++;
-        updateLevelDisplay();
-        document.getElementById('gameMessage').innerHTML =
-            `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
-        document.getElementById('gameControls').innerHTML = `
-            <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
-            <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
-            <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
-        `;
-    } else {
-        document.getElementById('gameMessage').innerHTML =
-            `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+    if (isDraw()) {
+        scores.draws++;
+        updateScoreboard();
         gameActive = false;
-        document.getElementById('gameControls').innerHTML = `
-            <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
-            <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+        document.getElementById("gameMessage").innerHTML =
+            `<div class="draw-message">🤝 It's a draw! Replay this level.</div>`;
+        document.getElementById("gameControls").innerHTML = `
+            <button class="reset-btn action-btn" onclick="resetGame()">New Game</button>
+            <button class="mode-btn action-btn" onclick="backToModeSelection()">Home</button>
         `;
+        return;
+    }
+
+    currentPlayer = currentPlayer === "X" ? "O" : "X";
+    updateCurrentPlayerDisplay();
+
+    if (gameMode === "computer" && currentPlayer === "O") {
+        makeComputerMove();
     }
 }
 
-function proceedToNextLevel() {
-    resetGame();
-    document.getElementById('gameMessage').innerHTML = '';
-    if (gameMode === 'computer' && currentPlayer === 'O') {
-        setTimeout(makeComputerMove, 500);
-    }
+function makeMove(index, player) {
+    board[index] = player;
+    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+    cell.textContent = player;
+    cell.classList.add(player.toLowerCase());
+    cell.disabled = true;
 }
 
 function makeComputerMove() {
@@ -200,21 +116,13 @@ function makeComputerMove() {
     document.getElementById('gameMessage').innerHTML =
         '<div class="computer-thinking">🤖 Computer is thinking...</div>';
 
-    const bestMove = getBestMove();
-
     setTimeout(() => {
-        if (bestMove && gameActive) {
-            const cellIndex = bestMove.row * 3 + bestMove.col;
-            const cellElement = document.querySelectorAll('.cell')[cellIndex];
+        const bestMove = getBestMove();
 
-            document.getElementById('gameMessage').innerHTML = '';
+        if (bestMove !== null && gameActive) {
+            makeMove(bestMove, "O");
 
-            board[bestMove.row][bestMove.col] = 'O';
-            cellElement.textContent = 'O';
-            cellElement.classList.add('o');
-            cellElement.disabled = true;
-
-            if (checkWinner(board, 'O')) {
+            if (checkWinner(board, "O")) {
                 document.getElementById('gameMessage').innerHTML =
                     '<div class="winner-message">🤖 Computer wins!</div>';
                 gameActive = false;
@@ -231,9 +139,188 @@ function makeComputerMove() {
                 return;
             }
 
-            currentPlayer = 'X';
+            currentPlayer = "X";
             updateCurrentPlayerDisplay();
         }
+
         isComputerTurn = false;
     }, 800);
+}
+
+function endRound(winner, pattern) {
+    gameActive = false;
+    scores[winner]++;
+    updateScoreboard();
+    highlightWinningCells(pattern);
+    disableAllCells();
+
+    const winnerText =
+        gameMode === "computer" && winner === "O"
+            ? "🤖 Computer wins this level!"
+            : `🎉 Player ${winner} wins this level!`;
+
+    if (level < 10) {
+        level++;
+        updateLevelDisplay();
+        document.getElementById("gameMessage").innerHTML = `
+            <div class="winner-message">${winnerText}</div>
+            <div class="level-message">Welcome to Level ${level}!</div>
+        `;
+        document.getElementById("gameControls").innerHTML = `
+            <button class="reset-btn action-btn" onclick="resetGame()">New Game</button>
+            <button class="mode-btn action-btn" onclick="proceedToNextLevel()">Next Level</button>
+            <button class="mode-btn action-btn" onclick="backToModeSelection()">Home</button>
+        `;
+    } else {
+        document.getElementById("gameMessage").innerHTML = `
+            <div class="winner-message">${winnerText}</div>
+            <div class="level-message">🏆 You completed all 10 levels!</div>
+        `;
+        document.getElementById("gameControls").innerHTML = `
+            <button class="reset-btn action-btn" onclick="resetGame()">New Game</button>
+            <button class="mode-btn action-btn" onclick="backToModeSelection()">Home</button>
+        `;
+    }
+}
+
+function proceedToNextLevel() {
+    resetGame();
+}
+
+function backToModeSelection() {
+    document.getElementById("gameInterface").classList.add("hidden");
+    document.getElementById("gameModeSelection").classList.remove("hidden");
+    level = 1;
+    updateLevelDisplay();
+    resetGame();
+}
+
+function updateCurrentPlayerDisplay() {
+    const playerText =
+        gameMode === "computer" && currentPlayer === "O"
+            ? "Current Player: Computer"
+            : `Current Player: ${currentPlayer}`;
+
+    document.getElementById("currentPlayer").textContent = playerText;
+}
+
+function updateScoreboard() {
+    document.getElementById("playerXScore").textContent = scores.X;
+    document.getElementById("playerOScore").textContent = scores.O;
+    document.getElementById("draws").textContent = scores.draws;
+}
+
+function updateLevelDisplay() {
+    document.getElementById("levelDisplay").textContent = `Level: ${level}`;
+}
+
+function disableAllCells() {
+    document.querySelectorAll(".cell").forEach(cell => {
+        cell.disabled = true;
+    });
+}
+
+function highlightWinningCells(pattern) {
+    pattern.forEach(index => {
+        const cell = document.querySelector(`.cell[data-index="${index}"]`);
+        if (cell) {
+            cell.classList.add("winning-cell");
+        }
+    });
+}
+
+function getWinnerData() {
+    for (const pattern of winningPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return { player: board[a], pattern };
+        }
+    }
+    return null;
+}
+
+function isDraw() {
+    return board.every(cell => cell !== "");
+}
+
+function getBestMove() {
+    // Check if the bot can win in the next move
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] === "") {
+            board[i] = "O";
+            if (checkWinner(board, "O")) {
+                board[i] = ""; // Reset the move
+                return i;
+            }
+            board[i] = "";
+        }
+    }
+
+    // Block the player from winning in the next move
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] === "") {
+            board[i] = "X";
+            if (checkWinner(board, "X")) {
+                board[i] = ""; // Reset the move
+                return i;
+            }
+            board[i] = "";
+        }
+    }
+
+    // Take the center if available
+    if (board[4] === "") {
+        return 4;
+    }
+
+    // Take a random corner if available
+    const corners = [0, 2, 6, 8];
+    for (let corner of corners) {
+        if (board[corner] === "") {
+            return corner;
+        }
+    }
+
+    // Take any available space
+    for (let i = 0; i < board.length; i++) {
+        if (board[i] === "") {
+            return i;
+        }
+    }
+
+    return null; // No moves left
+}
+
+function checkWinner(board, player) {
+    for (const pattern of winningPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] !== "" && board[a] === board[b] && board[a] === board[c]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Add logic for bot vs player game with 10 levels
+function startBotVsPlayerGame() {
+    gameMode = "computer";
+    level = 1;
+    document.getElementById("gameModeSelection").classList.add("hidden");
+    document.getElementById("gameInterface").classList.remove("hidden");
+    document.getElementById("gameMode").textContent = "Mode: Play with Computer";
+    resetGame();
+}
+
+function levelUp() {
+    if (level < 10) {
+        level++;
+        updateLevelDisplay();
+        document.getElementById('gameMessage').innerHTML =
+            `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+        resetGame();
+    } else {
+        document.getElementById('gameMessage').innerHTML =
+            `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+        gameActive = false;
+    }
 }

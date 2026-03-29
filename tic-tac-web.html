@@ -13,20 +13,25 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: #f8f9fa;
-            color: #212529;
+            background: #2c2c2c;
+            /* Dark background */
+            color: #f5f5f5;
+            /* Light text for contrast */
         }
 
         .game-container {
             text-align: center;
-            background: #ffffff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: #3a3a3a;
+            /* Darker container background */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
             border-radius: 20px;
             padding: 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
             max-width: 500px;
+            color: #ffffff;
+            /* Ensure text is visible */
         }
 
         h1 {
@@ -34,14 +39,43 @@
             font-size: 2.5em;
         }
 
+        .game-info {
+            margin: 20px 0;
+            font-size: 1.3em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-info div {
+            margin: 5px 0;
+        }
+
+        .scoreboard {
+            margin-top: 15px;
+            text-align: left;
+            background: #4a4a4a;
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .scoreboard p {
+            margin: 5px 0;
+            color: #ffffff;
+            /* Ensure text is visible */
+            font-size: 1.1em;
+        }
+
         .game-board {
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
-            gap: 5px;
+            gap: 10px;
             margin: 20px auto;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
+            background: #2c2c2c;
+            padding: 15px;
             border-radius: 15px;
             justify-self: center;
             width: fit-content;
@@ -82,33 +116,36 @@
         .game-info {
             margin: 20px 0;
             font-size: 1.3em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .current-player {
-            background: rgba(255, 255, 255, 0.2);
+            background: #4a4a4a;
+            /* Darker background for better contrast */
+            color: #ffffff;
+            /* White text for visibility */
             padding: 10px 20px;
             border-radius: 25px;
             display: inline-block;
             margin: 10px;
         }
 
-        .winner-message {
-            font-size: 1.5em;
-            margin: 20px 0;
-            padding: 15px;
-            background: #d0d0d0;
-            border-radius: 15px;
-        }
-
+        .winner-message,
         .draw-message {
             font-size: 1.5em;
             margin: 20px 0;
             padding: 15px;
-            background: #d0d0d0;
+            background: #444444;
+            /* Darker background for better contrast */
+            color: #ffffff;
+            /* White text for visibility */
+            border-radius: 15px;
         }
 
         .reset-btn {
-            background: #6c757d;
+            background: #5a5a5a;
             color: #ffffff;
             border: none;
             padding: 12px 25px;
@@ -116,27 +153,18 @@
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 20px;
+            margin: 10px;
         }
 
         .reset-btn:hover {
-            background: #5a6268;
-            box-shadow: none;
-        }
-
-        .game-mode-selection {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .game-mode-selection h2 {
-            margin-bottom: 30px;
-            font-size: 1.8em;
+            background: #4a4a4a;
         }
 
         .mode-btn {
-            background: #007bff;
+            background: #1e90ff;
+            /* Bright blue for buttons */
             color: #ffffff;
+            /* White text */
             border: none;
             padding: 15px 30px;
             font-size: 1.2em;
@@ -148,17 +176,20 @@
         }
 
         .mode-btn:hover {
-            background: #0056b3;
-            box-shadow: none;
+            background: #1c86ee;
+            /* Slightly darker blue on hover */
         }
 
         .game-mode-display {
-            background: #e0e0e0;
+            background: #5a5a5a;
+            /* Darker background for better contrast */
+            color: #ffffff;
+            /* White text for visibility */
             padding: 8px 15px;
             border-radius: 20px;
             display: inline-block;
             margin: 5px;
-            font-size: 0.9em;
+            font-size: 1em;
         }
 
         .game-controls {
@@ -191,6 +222,12 @@
             <div class="game-info">
                 <div class="current-player" id="currentPlayer">Current Player: X</div>
                 <div id="gameMode" class="game-mode-display"></div>
+                <div id="levelDisplay" class="game-mode-display">Level: 1</div>
+                <div class="scoreboard">
+                    <p>Player X: <span id="playerXScore">0</span></p>
+                    <p>Player O: <span id="playerOScore">0</span></p>
+                    <p>Draws: <span id="draws">0</span></p>
+                </div>
             </div>
 
             <div class="game-board" id="gameBoard">
@@ -216,6 +253,8 @@
         let gameActive = true;
         let gameMode = ""; // player 2 or pc
         let isComputerTurn = false;
+        let scores = { X: 0, O: 0, draws: 0 };
+        let level = 1;
 
         function startGame(mode) {
             gameMode = mode;
@@ -273,17 +312,29 @@
                     `<div class="winner-message">🎉 ${winnerText} wins!</div>`;
                 gameActive = false;
                 disableAllCells();
+
+                // Update scores
+                scores[currentPlayer]++;
+                updateScoreboard();
+                highlightWinningCells(board, currentPlayer);
+
+                // Level up
+                if (gameMode === 'computer' && currentPlayer === 'X') {
+                    levelUp();
+                }
                 return;
             }
-
 
             if (isDraw(board)) {
                 document.getElementById('gameMessage').innerHTML =
                     `<div class="draw-message">🤝 It's a draw!</div>`;
                 gameActive = false;
+
+                // Update scores
+                scores.draws++;
+                updateScoreboard();
                 return;
             }
-
 
             currentPlayer = currentPlayer === "X" ? "O" : "X";
             updateCurrentPlayerDisplay();
@@ -321,16 +372,15 @@
                     const cellIndex = bestMove.row * 3 + bestMove.col;
                     const cellElement = document.querySelectorAll('.cell')[cellIndex];
 
-
                     document.getElementById('gameMessage').innerHTML = '';
 
-                    // computer thinks
+                    // Computer makes its move
                     board[bestMove.row][bestMove.col] = 'O';
                     cellElement.textContent = 'O';
                     cellElement.classList.add('o');
                     cellElement.disabled = true;
 
-                    // check for winner
+                    // Check for winner
                     if (checkWinner(board, 'O')) {
                         document.getElementById('gameMessage').innerHTML =
                             '<div class="winner-message">🤖 Computer wins!</div>';
@@ -357,7 +407,27 @@
         }
 
         function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
 
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
                     if (board[i][j] === " ") {
@@ -474,8 +544,4443 @@
             });
         }
 
-        initializeBoard();
-    </script>
-</body>
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
 
-</html>
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return [[i, 0], [i, 1], [i, 2]];
+                }
+            }
+
+            // Check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return [[0, i], [1, i], [2, i]];
+                }
+            }
+
+            // Check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return [[0, 0], [1, 1], [2, 2]];
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return [[0, 2], [1, 1], [2, 0]];
+            }
+
+            return null;
+        }
+
+        function levelUp() {
+            if (level < 10) {
+                level++;
+                updateLevelDisplay();
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🎉 Level Up! Welcome to Level ${level}!</div>`;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="proceedToNextLevel()">⏭️ Proceed to Level ${level}</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            } else {
+                document.getElementById('gameMessage').innerHTML =
+                    `<div class="winner-message">🏆 Congratulations! You completed all 10 levels!</div>`;
+                gameActive = false;
+                document.getElementById('gameControls').innerHTML = `
+                    <button class="reset-btn" onclick="resetGame()">🔄 New Game</button>
+                    <button class="mode-btn" onclick="backToModeSelection()">🏠 Home</button>
+                `;
+            }
+        }
+
+        function proceedToNextLevel() {
+            resetGame();
+            document.getElementById('gameMessage').innerHTML = '';
+            if (gameMode === 'computer' && currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 500); // Ensure bot starts if it's its turn
+            }
+        }
+
+        function makeComputerMove() {
+            if (!gameActive) return;
+
+            isComputerTurn = true;
+
+            document.getElementById('gameMessage').innerHTML =
+                '<div class="computer-thinking">🤖 Computer is thinking...</div>';
+
+            const bestMove = getBestMove();
+
+            setTimeout(() => {
+                if (bestMove && gameActive) {
+                    const cellIndex = bestMove.row * 3 + bestMove.col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+
+                    document.getElementById('gameMessage').innerHTML = '';
+
+                    // Computer makes its move
+                    board[bestMove.row][bestMove.col] = 'O';
+                    cellElement.textContent = 'O';
+                    cellElement.classList.add('o');
+                    cellElement.disabled = true;
+
+                    // Check for winner
+                    if (checkWinner(board, 'O')) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="winner-message">🤖 Computer wins!</div>';
+                        gameActive = false;
+                        disableAllCells();
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    // Check for draw
+                    if (isDraw(board)) {
+                        document.getElementById('gameMessage').innerHTML =
+                            '<div class="draw-message">🤝 It\'s a draw!</div>';
+                        gameActive = false;
+                        isComputerTurn = false;
+                        return;
+                    }
+
+                    currentPlayer = 'X';
+                    updateCurrentPlayerDisplay();
+                }
+                isComputerTurn = false;
+            }, 800);
+        }
+
+        function getBestMove() {
+            if (level <= 3) {
+                return getRandomMove();
+            } else if (level <= 6) {
+                return getIntermediateMove();
+            } else {
+                return getAdvancedMove();
+            }
+        }
+
+        function getRandomMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getIntermediateMove() {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "O";
+                        if (checkWinner(board, "O")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        board[i][j] = "X";
+                        if (checkWinner(board, "X")) {
+                            board[i][j] = " ";
+                            return { row: i, col: j };
+                        }
+                        board[i][j] = " ";
+                    }
+                }
+            }
+
+
+            if (board[1][1] === " ") {
+                return { row: 1, col: 1 };
+            }
+
+
+            const corners = [{ row: 0, col: 0 }, { row: 0, col: 2 }, { row: 2, col: 0 }, { row: 2, col: 2 }];
+            for (let corner of corners) {
+                if (board[corner.row][corner.col] === " ") {
+                    return corner;
+                }
+            }
+
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkWinner(board, player) {
+            // check rows
+            for (let i = 0; i < 3; i++) {
+                if (board[i][0] === player && board[i][1] === player && board[i][2] === player) {
+                    return true;
+                }
+            }
+
+            // check columns
+            for (let i = 0; i < 3; i++) {
+                if (board[0][i] === player && board[1][i] === player && board[2][i] === player) {
+                    return true;
+                }
+            }
+
+            // check diagonals
+            if (board[0][0] === player && board[1][1] === player && board[2][2] === player) {
+                return true;
+            }
+            if (board[0][2] === player && board[1][1] === player && board[2][0] === player) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function isDraw(board) {
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === " ") {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function disableAllCells() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.disabled = true);
+        }
+
+        function resetGame() {
+            board = [
+                [" ", " ", " "],
+                [" ", " ", " "],
+                [" ", " ", " "]
+            ];
+            currentPlayer = "X";
+            gameActive = true;
+            isComputerTurn = false;
+
+            updateCurrentPlayerDisplay();
+            document.getElementById('gameMessage').innerHTML = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+                cell.disabled = false;
+            });
+        }
+
+        function updateScoreboard() {
+            document.getElementById('playerXScore').textContent = scores.X;
+            document.getElementById('playerOScore').textContent = scores.O;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function highlightWinningCells(board, player) {
+            const winningCombination = getWinningCombination(board, player);
+            if (winningCombination) {
+                winningCombination.forEach(([row, col]) => {
+                    const cellIndex = row * 3 + col;
+                    const cellElement = document.querySelectorAll('.cell')[cellIndex];
+                    cellElement.classList.add('winning-cell');
+                });
+            }
+        }
+
+        function getWinningCombination(board, player) {
+            // Check rows
+            for (let i = 0; i < 3; i

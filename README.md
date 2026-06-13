@@ -1,4 +1,6 @@
-﻿# XOX (Tic Tac Toe) Game
+﻿# XOX (Tic Tac Toe) Game 
+ 
+Play the original version here: https://tic-tac-pied.vercel.app/
 
 A fully featured Tic Tac Toe web application with multiple game modes and level progression!
 
